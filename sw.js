@@ -1,6 +1,6 @@
 // Service Worker for Arboleaf Scale PWA
 
-const CACHE_NAME = 'arboleaf-scale-v1';
+const CACHE_NAME = 'arboleaf-scale-v2';
 const urlsToCache = [
     '.',
     'index.html',
