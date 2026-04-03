@@ -87,10 +87,10 @@ async function handleConnect() {
         connectBtn.disabled = true;
         connectAnyBtn.disabled = true;
 
-        // Request device with name prefix filter - QN- for Arboleaf scales
+        // Request device with name prefix filter - QN for Arboleaf scales
         device = await navigator.bluetooth.requestDevice({
             filters: [
-                { namePrefix: 'QN-' }
+                { namePrefix: 'QN' }
             ],
             optionalServices: [SERVICE_UUID]
         });
