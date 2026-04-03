@@ -371,6 +371,8 @@ async function openSearchModal() {
   searchModal.classList.remove('hidden');
   searchInput.value = '';
   searchResults.innerHTML = '';
+  // Show quick foods initially
+  document.getElementById('quickFoods').classList.remove('hidden');
   await loadQuickFoods();
   // Focus input to trigger native keyboard (with dictation button)
   setTimeout(() => searchInput.focus(), 100);
@@ -409,9 +411,14 @@ async function onSearchInput(e) {
 
   if (query.length < 2) {
     searchResults.innerHTML = '';
+    // Show quick foods when no search query
+    document.getElementById('quickFoods').classList.remove('hidden');
     await loadQuickFoods();
     return;
   }
+
+  // Hide quick foods when searching
+  document.getElementById('quickFoods').classList.add('hidden');
 
   const foods = await searchFoods(query);
   renderSearchResults(foods);
