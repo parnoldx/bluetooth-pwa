@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2196F3">
+    <title>Arboleaf Scale</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Arboleaf Scale</h1>
+            <div id="status" class="status">Disconnected</div>
+        </header>
+
+        <main>
+            <div class="weight-display">
+                <div id="weight" class="weight">---</div>
+                <div class="unit">g</div>
+                <div id="stability" class="stability"></div>
+            </div>
+
+            <div class="controls">
+                <button id="connectBtn" class="btn btn-primary">Connect to Scale</button>
+                <button id="tareBtn" class="btn btn-secondary" disabled>Tare</button>
+            </div>
+
+            <div id="deviceInfo" class="device-info hidden"></div>
+        </main>
+
+        <footer>
+            <small>Web Bluetooth PWA</small>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
