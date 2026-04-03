@@ -86,9 +86,13 @@ async function handleConnect() {
         connectBtn.disabled = true;
         connectAnyBtn.disabled = true;
 
-        // Request device with service filter
+        // Request device with name filters (scale doesn't advertise service UUID in scan)
         device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [SERVICE_UUID] }],
+            filters: [
+                { name: 'QN-KS' },
+                { namePrefix: 'QN-' },
+                { namePrefix: 'Arboleaf' }
+            ],
             optionalServices: [SERVICE_UUID]
         });
 
@@ -103,8 +107,6 @@ async function handleConnect() {
 }
 
 async function handleConnectAny() {
-    console.log('handleConnectAny clicked');
-    alert('Scanning...');
     try {
         if (isConnected) {
             await disconnect();
@@ -126,7 +128,6 @@ async function handleConnectAny() {
     } catch (error) {
         console.error('Connection error:', error);
         statusEl.textContent = 'Connection failed: ' + error.message;
-        alert('Error: ' + error.message);
         connectBtn.disabled = false;
         connectAnyBtn.disabled = false;
     }
