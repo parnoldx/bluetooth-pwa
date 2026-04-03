@@ -302,31 +302,34 @@ async function sendCommand(cmd) {
 }
 
 function updateUIConnected() {
-    reconnectAttempts = 0; // Reset reconnection counter on successful connection
-    connectBtn.classList.add('hidden');
-    connectAnyBtn.classList.add('hidden');
-    tareBtn.disabled = false;
+    reconnectAttempts = 0;
+    if (connectBtn) connectBtn.classList.add('hidden');
+    if (connectAnyBtn) connectAnyBtn.classList.add('hidden');
+    if (tareBtn) tareBtn.disabled = false;
 }
 
 function updateUIDisconnected() {
     const savedDeviceId = localStorage.getItem('scaleDeviceId');
     const savedDeviceName = localStorage.getItem('scaleDeviceName');
 
-    // Show connect button with appropriate text
-    connectBtn.textContent = savedDeviceId ? `Reconnect to ${savedDeviceName || 'Scale'}` : 'Connect (QN-KS)';
-    connectBtn.classList.remove('hidden');
-    connectBtn.classList.add('btn-primary');
-    connectBtn.classList.remove('btn-secondary');
-    connectBtn.disabled = false;
+    if (connectBtn) {
+        connectBtn.textContent = savedDeviceId ? `Reconnect to ${savedDeviceName || 'Scale'}` : 'Connect (QN-KS)';
+        connectBtn.classList.remove('hidden');
+        connectBtn.classList.add('btn-primary');
+        connectBtn.classList.remove('btn-secondary');
+        connectBtn.disabled = false;
+    }
 
-    connectAnyBtn.textContent = 'Connect (Other)';
-    connectAnyBtn.classList.remove('hidden');
-    connectAnyBtn.classList.remove('btn-secondary');
-    connectAnyBtn.classList.add('btn-secondary');
-    connectAnyBtn.disabled = false;
-    tareBtn.disabled = true;
-    weightEl.textContent = '---';
-    stabilityEl.className = 'stability';
+    if (connectAnyBtn) {
+        connectAnyBtn.textContent = 'Connect (Other)';
+        connectAnyBtn.classList.remove('hidden');
+        connectAnyBtn.classList.remove('btn-secondary');
+        connectAnyBtn.classList.add('btn-secondary');
+        connectAnyBtn.disabled = false;
+    }
+    if (tareBtn) tareBtn.disabled = true;
+    if (weightEl) weightEl.textContent = '---';
+    if (stabilityEl) stabilityEl.className = 'stability';
     device = null;
     server = null;
     notifyChar = null;

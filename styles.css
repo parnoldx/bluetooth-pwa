@@ -11,6 +11,10 @@
     --text-secondary: #757575;
 }
 
+.hidden {
+    display: none !important;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
