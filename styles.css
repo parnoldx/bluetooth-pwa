@@ -629,7 +629,17 @@ html, body {
     color: var(--text-secondary);
 }
 
-/* Confirmation Modal */
+.scale-weight-display {
+    flex: 1;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
 .confirm-food-info {
     padding: 20px;
 }

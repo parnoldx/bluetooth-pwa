@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#4CAF50">
     <title>Calorie Tracker</title>
-    <link rel="manifest" href="manifest.json?v=4">
-    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="manifest" href="manifest.json?v=5">
+    <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
     <div id="app">
@@ -52,9 +52,6 @@
                     <button id="connectAnyBtn" class="btn btn-secondary">Connect (Any)</button>
                     <button id="tareBtn" class="btn btn-secondary" disabled>Tare</button>
                 </div>
-                <button id="addToLogBtn" class="btn btn-accent" disabled>
-                    <span class="btn-icon">+</span> Add to Log
-                </button>
             </div>
 
             <div id="deviceInfo" class="device-info hidden"></div>
@@ -134,6 +131,7 @@
                 </div>
                 <div class="weight-input-row" id="weightInputRow">
                     <label id="weightLabel">Weight (g):</label>
+                    <span id="scaleWeightDisplay" class="scale-weight-display hidden">0 g</span>
                     <input type="number" id="weightInput" min="1" max="50000" step="1" value="100">
                     <button id="useScaleWeightBtn" class="btn btn-small hidden">Use Scale</button>
                 </div>
@@ -169,7 +167,7 @@
     </div>
 
     <!-- Modules -->
-    <script src="app.js?v=4"></script>
-    <script type="module" src="main.js?v=4"></script>
+    <script src="app.js?v=5"></script>
+    <script type="module" src="main.js?v=5"></script>
 </body>
 </html>

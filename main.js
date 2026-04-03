@@ -36,7 +36,8 @@ let currentWeight = 0;
 let isWeightStable = false;
 let selectedFood = null;
 let currentFoodWeight = 100; // Default weight for confirmation
-let isScaleMode = false; // True when adding from scale (skips confirmation)
+let isScaleMode = false; // True when adding from scale (uses live weight updates)
+let weightUpdateInterval = null; // For live weight updates in confirmation dialog
 
 // DOM Elements - Scale
 const weightEl = document.getElementById('weight');
@@ -45,7 +46,6 @@ const scaleStatusEl = document.getElementById('scaleStatus');
 const connectBtn = document.getElementById('connectBtn');
 const connectAnyBtn = document.getElementById('connectAnyBtn');
 const tareBtn = document.getElementById('tareBtn');
-const addToLogBtn = document.getElementById('addToLogBtn');
 const deviceInfoEl = document.getElementById('deviceInfo');
 
 // DOM Elements - Daily Totals
@@ -83,6 +83,7 @@ const confirmFoodName = document.getElementById('confirmFoodName');
 const confirmFoodBrand = document.getElementById('confirmFoodBrand');
 const confirmCalories = document.getElementById('confirmCalories');
 const weightInput = document.getElementById('weightInput');
+const scaleWeightDisplay = document.getElementById('scaleWeightDisplay');
 const useScaleWeightBtn = document.getElementById('useScaleWeightBtn');
 const calcCalories = document.getElementById('calcCalories');
 const calcProtein = document.getElementById('calcProtein');
@@ -158,6 +159,15 @@ function setupScaleIntegration() {
     currentWeight = weight;
     isWeightStable = isStable;
 
+    // If confirmation modal is open and scale is connected, update weight display live
+    if (selectedFood && !confirmModal.classList.contains('hidden') && window.isConnected && currentWeight > 0) {
+      currentFoodWeight = Math.round(currentWeight);
+      if (scaleWeightDisplay && !scaleWeightDisplay.classList.contains('hidden')) {
+        scaleWeightDisplay.textContent = formatWeight(currentFoodWeight);
+      }
+      updateCalculatedNutrition();
+    }
+
     // Update Add button state
     updateAddButtonState();
   };
@@ -181,10 +191,7 @@ function setupScaleIntegration() {
 }
 
 function updateAddButtonState() {
-  // Enable "Add to Log" button when connected and has stable weight > 0
-  const isConnected = window.isConnected;
-  const canAdd = isConnected && isWeightStable && currentWeight > 0;
-  addToLogBtn.disabled = !canAdd;
+  // No longer needed - addToLogBtn removed
 }
 
 // Event Listeners
@@ -200,23 +207,13 @@ function setupEventListeners() {
     updateDateDisplay();
   });
 
-  // Add to log from scale
-  addToLogBtn.addEventListener('click', () => {
-    if (currentWeight > 0) {
-      currentFoodWeight = Math.round(currentWeight);
-      isScaleMode = true; // Mark as scale mode - skip confirmation
-      openSearchModal();
-      showToast(`Select food for ${formatWeight(currentFoodWeight)}`, 'info');
-    }
-  });
-
   // Scanner
   scanBarcodeBtn.addEventListener('click', openScannerModal);
   closeScannerBtn.addEventListener('click', closeScannerModal);
 
-  // Search
+  // Search - always use scale weight when available
   searchFoodBtn.addEventListener('click', () => {
-    isScaleMode = false; // Manual entry mode
+    isScaleMode = true;
     openSearchModal();
   });
   closeSearchBtn.addEventListener('click', closeSearchModal);
@@ -226,11 +223,11 @@ function setupEventListeners() {
   closeConfirmBtn.addEventListener('click', closeConfirmModal);
   cancelConfirmBtn.addEventListener('click', closeConfirmModal);
   saveFoodBtn.addEventListener('click', onSaveFood);
-  weightInput.addEventListener('input', onWeightInputChange);
   useScaleWeightBtn.addEventListener('click', () => {
     if (currentWeight > 0) {
-      weightInput.value = Math.round(currentWeight);
-      onWeightInputChange();
+      currentFoodWeight = Math.round(currentWeight);
+      weightInput.value = currentFoodWeight;
+      updateCalculatedNutrition();
     }
   });
 
@@ -267,7 +264,7 @@ function onLogUpdate({ entries, dailyTotals, date }) {
 
 function renderFoodLog(entries) {
   if (entries.length === 0) {
-    foodLogEl.innerHTML = '<p class="empty-log">No entries yet. Put food on scale and tap "Add to Log".</p>';
+    foodLogEl.innerHTML = '<p class="empty-log">No entries yet. Use Scan Barcode or Search Food to add items.</p>';
     return;
   }
 
@@ -349,12 +346,9 @@ async function onBarcodeScanned(barcode) {
     hideLoading();
     await closeScannerModal();
 
-    // If in scale mode, add immediately without confirmation
-    if (isScaleMode && currentFoodWeight > 0) {
-      await addFoodDirectly(food, currentFoodWeight);
-    } else {
-      openConfirmModal(food);
-    }
+    // Always go to confirmation with scale mode enabled
+    isScaleMode = true;
+    openConfirmModal(food);
 
     showToast(`Found: ${food.name}`, 'success');
   } catch (error) {
@@ -365,10 +359,8 @@ async function onBarcodeScanned(barcode) {
     // Switch to manual search after a delay
     setTimeout(async () => {
       await closeScannerModal();
+      isScaleMode = true;
       openSearchModal();
-      searchInput.value = '';
-      searchInput.placeholder = 'Type product name...';
-      searchInput.focus();
     }, 1500);
   }
 }
@@ -405,15 +397,8 @@ async function loadQuickFoods() {
   quickFoodsList.querySelectorAll('.quick-food-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const foodData = JSON.parse(chip.dataset.food);
-
-      // If in scale mode, add immediately without confirmation
-      if (isScaleMode && currentFoodWeight > 0) {
-        closeSearchModal();
-        addFoodDirectly(foodData, currentFoodWeight);
-      } else {
-        closeSearchModal();
-        openConfirmModal(foodData);
-      }
+      closeSearchModal();
+      openConfirmModal(foodData);
     });
   });
 }
@@ -453,15 +438,8 @@ function renderSearchResults(foods) {
   searchResults.querySelectorAll('.food-result').forEach(result => {
     result.addEventListener('click', () => {
       const foodData = JSON.parse(result.dataset.food);
-
-      // If in scale mode, add immediately without confirmation
-      if (isScaleMode && currentFoodWeight > 0) {
-        closeSearchModal();
-        addFoodDirectly(foodData, currentFoodWeight);
-      } else {
-        closeSearchModal();
-        openConfirmModal(foodData);
-      }
+      closeSearchModal();
+      openConfirmModal(foodData);
     });
   });
 }
@@ -505,25 +483,29 @@ function openConfirmModal(food) {
   confirmFoodBrand.textContent = food.brand || '';
   confirmCalories.textContent = food.calories || 0;
 
-  // Set weight based on mode
-  if (isScaleMode && currentWeight > 0) {
-    // Scale mode: use scale weight directly
-    currentFoodWeight = Math.round(currentWeight);
-    weightLabel.textContent = 'Scale Weight (g):';
-    useScaleWeightBtn.classList.add('hidden');
-  } else {
-    // Manual mode: show editable weight and Use Scale button if available
-    currentFoodWeight = 100; // Default
-    weightLabel.textContent = 'Weight (g):';
-    // Show Use Scale button only if scale is connected and has weight
-    if (window.isConnected && currentWeight > 0) {
-      useScaleWeightBtn.classList.remove('hidden');
-    } else {
-      useScaleWeightBtn.classList.add('hidden');
-    }
-  }
+  // Determine weight display mode based on scale connection
+  const scaleConnected = window.isConnected && currentWeight > 0;
 
-  weightInput.value = currentFoodWeight;
+  if (scaleConnected) {
+    // Scale connected: show live weight display, hide input
+    scaleWeightDisplay.classList.remove('hidden');
+    weightInput.classList.add('hidden');
+    useScaleWeightBtn.classList.add('hidden');
+    weightLabel.textContent = 'Scale Weight:';
+
+    // Set initial weight from scale
+    currentFoodWeight = Math.round(currentWeight);
+    scaleWeightDisplay.textContent = formatWeight(currentFoodWeight);
+  } else {
+    // No scale: show input box for manual entry
+    scaleWeightDisplay.classList.add('hidden');
+    weightInput.classList.remove('hidden');
+    useScaleWeightBtn.classList.add('hidden');
+    weightLabel.textContent = 'Weight (g):';
+
+    currentFoodWeight = 100; // Default
+    weightInput.value = currentFoodWeight;
+  }
 
   // Calculate initial nutrition
   updateCalculatedNutrition();

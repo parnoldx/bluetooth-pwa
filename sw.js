@@ -1,6 +1,6 @@
 // Service Worker for Calorie Tracker PWA
 
-const CACHE_NAME = 'calorie-tracker-v2';
+const CACHE_NAME = 'calorie-tracker-v3';
 const urlsToCache = [
     '.',
     'index.html',
