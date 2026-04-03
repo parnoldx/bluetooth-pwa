@@ -103,6 +103,8 @@ async function handleConnect() {
 }
 
 async function handleConnectAny() {
+    console.log('handleConnectAny clicked');
+    alert('Scanning...');
     try {
         if (isConnected) {
             await disconnect();
@@ -124,6 +126,7 @@ async function handleConnectAny() {
     } catch (error) {
         console.error('Connection error:', error);
         statusEl.textContent = 'Connection failed: ' + error.message;
+        alert('Error: ' + error.message);
         connectBtn.disabled = false;
         connectAnyBtn.disabled = false;
     }
