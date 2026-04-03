@@ -3,39 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2196F3">
-    <title>Arboleaf Scale</title>
-    <link rel="manifest" href="manifest.json?v=2">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <meta name="theme-color" content="#4CAF50">
+    <title>Calorie Tracker</title>
+    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
     <div id="app">
-        <header>
-            <h1>Arboleaf Scale</h1>
-            <div id="status" class="status">Disconnected</div>
+        <!-- Header with Daily Totals -->
+        <header class="app-header">
+            <h1>Calorie Tracker</h1>
+            <div class="date-nav">
+                <button id="prevDayBtn" class="btn-icon">◀</button>
+                <span id="currentDate">Today</span>
+                <button id="nextDayBtn" class="btn-icon">▶</button>
+            </div>
+            <div class="daily-totals">
+                <div class="total-item calories">
+                    <span class="total-value" id="totalCalories">0</span>
+                    <span class="total-label">cal</span>
+                </div>
+                <div class="total-item protein">
+                    <span class="total-value" id="totalProtein">0</span>
+                    <span class="total-label">protein</span>
+                </div>
+                <div class="total-item carbs">
+                    <span class="total-value" id="totalCarbs">0</span>
+                    <span class="total-label">carbs</span>
+                </div>
+                <div class="total-item fat">
+                    <span class="total-value" id="totalFat">0</span>
+                    <span class="total-label">fat</span>
+                </div>
+            </div>
         </header>
 
-        <main>
+        <!-- Scale Section -->
+        <section class="scale-section">
             <div class="weight-display">
                 <div id="weight" class="weight">---</div>
                 <div class="unit">g</div>
                 <div id="stability" class="stability"></div>
             </div>
 
-            <div class="controls">
-                <button id="connectBtn" class="btn btn-primary">Connect (QN-KS)</button>
-                <button id="connectAnyBtn" class="btn btn-secondary">Connect (Other)</button>
-                <button id="tareBtn" class="btn btn-secondary" disabled>Tare</button>
+            <div class="scale-controls">
+                <div class="scale-buttons">
+                    <button id="connectBtn" class="btn btn-primary">Connect Scale</button>
+                    <button id="connectAnyBtn" class="btn btn-secondary">Connect (Any)</button>
+                    <button id="tareBtn" class="btn btn-secondary" disabled>Tare</button>
+                </div>
+                <button id="addToLogBtn" class="btn btn-accent" disabled>
+                    <span class="btn-icon">+</span> Add to Log
+                </button>
             </div>
 
             <div id="deviceInfo" class="device-info hidden"></div>
-        </main>
+            <div id="scaleStatus" class="scale-status">Disconnected</div>
+        </section>
 
-        <footer>
-            <small>Web Bluetooth PWA</small>
-        </footer>
+        <!-- Add Food Section -->
+        <section class="add-food-section">
+            <h2>Add Food</h2>
+            <div class="add-food-buttons">
+                <button id="scanBarcodeBtn" class="btn btn-scan">
+                    <span class="btn-icon">📷</span>
+                    Scan Barcode
+                </button>
+                <button id="voiceInputBtn" class="btn btn-voice">
+                    <span class="btn-icon">🎤</span>
+                    Voice / Search
+                </button>
+            </div>
+        </section>
+
+        <!-- Daily Log Section -->
+        <section class="log-section">
+            <h2>Today's Food</h2>
+            <div id="foodLog" class="food-log">
+                <p class="empty-log">No entries yet. Add food from the scale or search.</p>
+            </div>
+        </section>
+
+        <!-- Barcode Scanner Modal -->
+        <div id="scannerModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Scan Barcode</h3>
+                    <button id="closeScannerBtn" class="btn-close">&times;</button>
+                </div>
+                <div id="barcode-reader" class="barcode-reader"></div>
+                <div id="scannerStatus" class="scanner-status">Position barcode in frame</div>
+            </div>
+        </div>
+
+        <!-- Food Search Modal -->
+        <div id="searchModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Search Food</h3>
+                    <button id="closeSearchBtn" class="btn-close">&times;</button>
+                </div>
+                <div class="search-controls">
+                    <div class="voice-input-row">
+                        <input type="text" id="searchInput" placeholder="Type food name..." autocomplete="off">
+                        <button id="startVoiceBtn" class="btn-icon" title="Voice input">🎤</button>
+                    </div>
+                    <div id="voiceStatus" class="voice-status hidden">Listening...</div>
+                </div>
+                <div id="quickFoods" class="quick-foods">
+                    <h4>Recent Foods</h4>
+                    <div id="quickFoodsList" class="quick-foods-list"></div>
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+
+        <!-- Food Confirmation Modal -->
+        <div id="confirmModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirm Food</h3>
+                    <button id="closeConfirmBtn" class="btn-close">&times;</button>
+                </div>
+                <div id="confirmFoodInfo" class="confirm-food-info">
+                    <div class="food-card">
+                        <h4 id="confirmFoodName">Food Name</h4>
+                        <p id="confirmFoodBrand" class="food-brand"></p>
+                        <div class="nutrition-per-100">
+                            <span id="confirmCalories">0</span> cal per 100g
+                        </div>
+                    </div>
+                </div>
+                <div class="weight-input-row">
+                    <label>Weight (g):</label>
+                    <input type="number" id="weightInput" min="1" max="50000" step="1" value="100">
+                    <button id="useScaleWeightBtn" class="btn btn-small">Use Scale</button>
+                </div>
+                <div class="calculated-nutrition">
+                    <div class="calc-item">
+                        <span id="calcCalories">0</span> cal
+                    </div>
+                    <div class="calc-item">
+                        P: <span id="calcProtein">0</span>g
+                    </div>
+                    <div class="calc-item">
+                        C: <span id="calcCarbs">0</span>g
+                    </div>
+                    <div class="calc-item">
+                        F: <span id="calcFat">0</span>g
+                    </div>
+                </div>
+                <div class="confirm-actions">
+                    <button id="cancelConfirmBtn" class="btn btn-secondary">Cancel</button>
+                    <button id="saveFoodBtn" class="btn btn-primary">Add to Log</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p id="loadingText">Loading...</p>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <!-- Modules -->
+    <script src="app.js?v=3"></script>
+    <script type="module" src="main.js?v=3"></script>
 </body>
 </html>

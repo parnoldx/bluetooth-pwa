@@ -1,0 +1,535 @@
+{
+  "foods": [
+    {
+      "id": "egg_large",
+      "name": "Egg (large, raw)",
+      "calories": 143,
+      "protein": 12.6,
+      "carbs": 0.7,
+      "fat": 9.5,
+      "servingSize": 50
+    },
+    {
+      "id": "egg_white",
+      "name": "Egg white (raw)",
+      "calories": 52,
+      "protein": 11.0,
+      "carbs": 0.7,
+      "fat": 0.2,
+      "servingSize": 33
+    },
+    {
+      "id": "chicken_breast_raw",
+      "name": "Chicken breast (raw, skinless)",
+      "calories": 165,
+      "protein": 31.0,
+      "carbs": 0,
+      "fat": 3.6,
+      "servingSize": 150
+    },
+    {
+      "id": "chicken_breast_cooked",
+      "name": "Chicken breast (cooked, skinless)",
+      "calories": 165,
+      "protein": 31.0,
+      "carbs": 0,
+      "fat": 3.6,
+      "servingSize": 100
+    },
+    {
+      "id": "chicken_thigh_raw",
+      "name": "Chicken thigh (raw, skinless)",
+      "calories": 119,
+      "protein": 20.0,
+      "carbs": 0,
+      "fat": 4.0,
+      "servingSize": 150
+    },
+    {
+      "id": "ground_beef_85",
+      "name": "Ground beef (85% lean, raw)",
+      "calories": 250,
+      "protein": 26.0,
+      "carbs": 0,
+      "fat": 15.0,
+      "servingSize": 100
+    },
+    {
+      "id": "ground_beef_90",
+      "name": "Ground beef (90% lean, raw)",
+      "calories": 176,
+      "protein": 26.0,
+      "carbs": 0,
+      "fat": 8.0,
+      "servingSize": 100
+    },
+    {
+      "id": "salmon_raw",
+      "name": "Salmon (raw, Atlantic)",
+      "calories": 208,
+      "protein": 20.0,
+      "carbs": 0,
+      "fat": 13.0,
+      "servingSize": 150
+    },
+    {
+      "id": "tuna_canned",
+      "name": "Tuna (canned in water, drained)",
+      "calories": 116,
+      "protein": 26.0,
+      "carbs": 0,
+      "fat": 1.0,
+      "servingSize": 100
+    },
+    {
+      "id": "white_rice_cooked",
+      "name": "White rice (cooked)",
+      "calories": 130,
+      "protein": 2.7,
+      "carbs": 28.0,
+      "fat": 0.3,
+      "servingSize": 150
+    },
+    {
+      "id": "brown_rice_cooked",
+      "name": "Brown rice (cooked)",
+      "calories": 112,
+      "protein": 2.6,
+      "carbs": 24.0,
+      "fat": 0.9,
+      "servingSize": 150
+    },
+    {
+      "id": "oats_dry",
+      "name": "Oats (dry, rolled)",
+      "calories": 379,
+      "protein": 13.2,
+      "carbs": 69.0,
+      "fat": 6.5,
+      "servingSize": 40
+    },
+    {
+      "id": "oats_cooked",
+      "name": "Oatmeal (cooked with water)",
+      "calories": 71,
+      "protein": 2.5,
+      "carbs": 12.0,
+      "fat": 1.2,
+      "servingSize": 234
+    },
+    {
+      "id": "pasta_cooked",
+      "name": "Pasta (cooked, plain)",
+      "calories": 131,
+      "protein": 5.0,
+      "carbs": 25.0,
+      "fat": 1.1,
+      "servingSize": 140
+    },
+    {
+      "id": "bread_white",
+      "name": "Bread (white, slice)",
+      "calories": 265,
+      "protein": 9.0,
+      "carbs": 49.0,
+      "fat": 3.2,
+      "servingSize": 25
+    },
+    {
+      "id": "bread_whole_wheat",
+      "name": "Bread (whole wheat, slice)",
+      "calories": 247,
+      "protein": 13.0,
+      "carbs": 41.0,
+      "fat": 3.4,
+      "servingSize": 32
+    },
+    {
+      "id": "apple",
+      "name": "Apple (raw, with skin)",
+      "calories": 52,
+      "protein": 0.3,
+      "carbs": 14.0,
+      "fat": 0.2,
+      "servingSize": 182
+    },
+    {
+      "id": "banana",
+      "name": "Banana (raw)",
+      "calories": 89,
+      "protein": 1.1,
+      "carbs": 23.0,
+      "fat": 0.3,
+      "servingSize": 118
+    },
+    {
+      "id": "orange",
+      "name": "Orange (raw)",
+      "calories": 47,
+      "protein": 0.9,
+      "carbs": 12.0,
+      "fat": 0.1,
+      "servingSize": 131
+    },
+    {
+      "id": "strawberries",
+      "name": "Strawberries (raw)",
+      "calories": 32,
+      "protein": 0.7,
+      "carbs": 7.7,
+      "fat": 0.3,
+      "servingSize": 150
+    },
+    {
+      "id": "blueberries",
+      "name": "Blueberries (raw)",
+      "calories": 57,
+      "protein": 0.7,
+      "carbs": 14.0,
+      "fat": 0.3,
+      "servingSize": 148
+    },
+    {
+      "id": "broccoli",
+      "name": "Broccoli (raw)",
+      "calories": 34,
+      "protein": 2.8,
+      "carbs": 7.0,
+      "fat": 0.4,
+      "servingSize": 100
+    },
+    {
+      "id": "broccoli_cooked",
+      "name": "Broccoli (cooked, steamed)",
+      "calories": 35,
+      "protein": 2.4,
+      "carbs": 7.2,
+      "fat": 0.4,
+      "servingSize": 100
+    },
+    {
+      "id": "spinach_raw",
+      "name": "Spinach (raw)",
+      "calories": 23,
+      "protein": 2.9,
+      "carbs": 3.6,
+      "fat": 0.4,
+      "servingSize": 100
+    },
+    {
+      "id": "carrots",
+      "name": "Carrots (raw)",
+      "calories": 41,
+      "protein": 0.9,
+      "carbs": 10.0,
+      "fat": 0.2,
+      "servingSize": 100
+    },
+    {
+      "id": "potato_baked",
+      "name": "Potato (baked, with skin)",
+      "calories": 93,
+      "protein": 2.5,
+      "carbs": 21.0,
+      "fat": 0.1,
+      "servingSize": 173
+    },
+    {
+      "id": "sweet_potato",
+      "name": "Sweet potato (baked, with skin)",
+      "calories": 90,
+      "protein": 2.0,
+      "carbs": 21.0,
+      "fat": 0.1,
+      "servingSize": 114
+    },
+    {
+      "id": "avocado",
+      "name": "Avocado (raw)",
+      "calories": 160,
+      "protein": 2.0,
+      "carbs": 9.0,
+      "fat": 15.0,
+      "servingSize": 150
+    },
+    {
+      "id": "almonds",
+      "name": "Almonds (raw)",
+      "calories": 579,
+      "protein": 21.0,
+      "carbs": 22.0,
+      "fat": 49.0,
+      "servingSize": 28
+    },
+    {
+      "id": "walnuts",
+      "name": "Walnuts (raw)",
+      "calories": 654,
+      "protein": 15.0,
+      "carbs": 14.0,
+      "fat": 65.0,
+      "servingSize": 28
+    },
+    {
+      "id": "peanut_butter",
+      "name": "Peanut butter (smooth)",
+      "calories": 588,
+      "protein": 25.0,
+      "carbs": 20.0,
+      "fat": 50.0,
+      "servingSize": 32
+    },
+    {
+      "id": "olive_oil",
+      "name": "Olive oil",
+      "calories": 884,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100.0,
+      "servingSize": 15
+    },
+    {
+      "id": "butter",
+      "name": "Butter",
+      "calories": 717,
+      "protein": 0.9,
+      "carbs": 0.1,
+      "fat": 81.0,
+      "servingSize": 14
+    },
+    {
+      "id": "milk_whole",
+      "name": "Milk (whole, 3.25%)",
+      "calories": 61,
+      "protein": 3.2,
+      "carbs": 4.8,
+      "fat": 3.3,
+      "servingSize": 244
+    },
+    {
+      "id": "milk_2pct",
+      "name": "Milk (2% reduced fat)",
+      "calories": 50,
+      "protein": 3.4,
+      "carbs": 4.9,
+      "fat": 2.0,
+      "servingSize": 244
+    },
+    {
+      "id": "greek_yogurt",
+      "name": "Greek yogurt (plain, nonfat)",
+      "calories": 59,
+      "protein": 10.0,
+      "carbs": 3.6,
+      "fat": 0.4,
+      "servingSize": 170
+    },
+    {
+      "id": "cottage_cheese",
+      "name": "Cottage cheese (lowfat, 2%)",
+      "calories": 81,
+      "protein": 14.0,
+      "carbs": 5.0,
+      "fat": 2.3,
+      "servingSize": 226
+    },
+    {
+      "id": "cheddar_cheese",
+      "name": "Cheddar cheese",
+      "calories": 402,
+      "protein": 25.0,
+      "carbs": 1.3,
+      "fat": 33.0,
+      "servingSize": 28
+    },
+    {
+      "id": "mozzarella",
+      "name": "Mozzarella cheese (part-skim)",
+      "calories": 254,
+      "protein": 24.0,
+      "carbs": 2.8,
+      "fat": 16.0,
+      "servingSize": 28
+    },
+    {
+      "id": "tofu_firm",
+      "name": "Tofu (firm, raw)",
+      "calories": 144,
+      "protein": 17.0,
+      "carbs": 3.0,
+      "fat": 9.0,
+      "servingSize": 126
+    },
+    {
+      "id": "black_beans_cooked",
+      "name": "Black beans (cooked, boiled)",
+      "calories": 132,
+      "protein": 9.0,
+      "carbs": 24.0,
+      "fat": 0.5,
+      "servingSize": 172
+    },
+    {
+      "id": "lentils_cooked",
+      "name": "Lentils (cooked, boiled)",
+      "calories": 116,
+      "protein": 9.0,
+      "carbs": 20.0,
+      "fat": 0.4,
+      "servingSize": 198
+    },
+    {
+      "id": "chickpeas_cooked",
+      "name": "Chickpeas (cooked, boiled)",
+      "calories": 164,
+      "protein": 8.9,
+      "carbs": 27.0,
+      "fat": 2.6,
+      "servingSize": 164
+    },
+    {
+      "id": "quinoa_cooked",
+      "name": "Quinoa (cooked)",
+      "calories": 120,
+      "protein": 4.4,
+      "carbs": 21.0,
+      "fat": 1.9,
+      "servingSize": 185
+    },
+    {
+      "id": "tomato",
+      "name": "Tomato (raw)",
+      "calories": 18,
+      "protein": 0.9,
+      "carbs": 3.9,
+      "fat": 0.2,
+      "servingSize": 123
+    },
+    {
+      "id": "cucumber",
+      "name": "Cucumber (raw, with peel)",
+      "calories": 15,
+      "protein": 0.7,
+      "carbs": 3.6,
+      "fat": 0.1,
+      "servingSize": 100
+    },
+    {
+      "id": "lettuce",
+      "name": "Lettuce (raw, iceberg)",
+      "calories": 14,
+      "protein": 0.9,
+      "carbs": 3.0,
+      "fat": 0.1,
+      "servingSize": 72
+    },
+    {
+      "id": "bell_pepper",
+      "name": "Bell pepper (raw, red)",
+      "calories": 31,
+      "protein": 1.0,
+      "carbs": 6.0,
+      "fat": 0.3,
+      "servingSize": 119
+    },
+    {
+      "id": "onion",
+      "name": "Onion (raw)",
+      "calories": 40,
+      "protein": 1.1,
+      "carbs": 9.0,
+      "fat": 0.1,
+      "servingSize": 110
+    },
+    {
+      "id": "garlic",
+      "name": "Garlic (raw)",
+      "calories": 149,
+      "protein": 6.4,
+      "carbs": 33.0,
+      "fat": 0.5,
+      "servingSize": 10
+    },
+    {
+      "id": "honey",
+      "name": "Honey",
+      "calories": 304,
+      "protein": 0.3,
+      "carbs": 82.0,
+      "fat": 0,
+      "servingSize": 21
+    },
+    {
+      "id": "sugar_white",
+      "name": "Sugar (white, granulated)",
+      "calories": 387,
+      "protein": 0,
+      "carbs": 100.0,
+      "fat": 0,
+      "servingSize": 4
+    },
+    {
+      "id": "flour_all_purpose",
+      "name": "Flour (all-purpose, bleached)",
+      "calories": 364,
+      "protein": 10.0,
+      "carbs": 76.0,
+      "fat": 1.0,
+      "servingSize": 30
+    },
+    {
+      "id": "yeast",
+      "name": "Baker's yeast (dry, active)",
+      "calories": 325,
+      "protein": 40.0,
+      "carbs": 41.0,
+      "fat": 7.6,
+      "servingSize": 7
+    },
+    {
+      "id": "chocolate_dark",
+      "name": "Chocolate (dark, 70-85% cacao)",
+      "calories": 598,
+      "protein": 7.8,
+      "carbs": 46.0,
+      "fat": 43.0,
+      "servingSize": 28
+    },
+    {
+      "id": "protein_whey",
+      "name": "Whey protein powder",
+      "calories": 400,
+      "protein": 80.0,
+      "carbs": 10.0,
+      "fat": 3.0,
+      "servingSize": 30
+    },
+    {
+      "id": "coffee_black",
+      "name": "Coffee (brewed, black)",
+      "calories": 2,
+      "protein": 0.3,
+      "carbs": 0,
+      "fat": 0,
+      "servingSize": 237
+    },
+    {
+      "id": "tea_green",
+      "name": "Green tea (brewed)",
+      "calories": 2,
+      "protein": 0,
+      "carbs": 0.2,
+      "fat": 0,
+      "servingSize": 245
+    },
+    {
+      "id": "water",
+      "name": "Water",
+      "calories": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0,
+      "servingSize": 237
+    }
+  ]
+}
