@@ -95,10 +95,11 @@ async function handleConnect() {
             optionalServices: [SERVICE_UUID]
         });
 
+        console.log('Device selected via filter:', device.name, device.id);
         await connectToDevice(device);
 
     } catch (error) {
-        console.error('Connection error:', error);
+        console.error('Filter connect error:', error.name, error.message, error);
         statusEl.textContent = 'Connection failed: ' + error.message;
         connectBtn.disabled = false;
         connectAnyBtn.disabled = false;
@@ -122,10 +123,11 @@ async function handleConnectAny() {
             optionalServices: [SERVICE_UUID, 'battery_service', 'device_information']
         });
 
+        console.log('Device selected via acceptAll:', device.name, device.id);
         await connectToDevice(device);
 
     } catch (error) {
-        console.error('Connection error:', error);
+        console.error('AcceptAll connect error:', error.name, error.message, error);
         statusEl.textContent = 'Connection failed: ' + error.message;
         connectBtn.disabled = false;
         connectAnyBtn.disabled = false;
@@ -135,6 +137,7 @@ async function handleConnectAny() {
 async function connectToDevice(targetDevice) {
     try {
         statusEl.textContent = 'Connecting to GATT server...';
+        console.log('Connecting to device:', targetDevice.name, targetDevice.id);
 
         device = targetDevice;
 
@@ -142,33 +145,31 @@ async function connectToDevice(targetDevice) {
         device.addEventListener('gattserverdisconnected', handleDisconnect);
 
         // Connect to GATT server with timeout
+        statusEl.textContent = 'Connecting to GATT...';
         const connectPromise = device.gatt.connect();
         const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Connection timeout')), 10000)
         );
         server = await Promise.race([connectPromise, timeoutPromise]);
+        console.log('GATT connected');
 
         statusEl.textContent = 'Getting service...';
-
-        // Get service
         const service = await server.getPrimaryService(SERVICE_UUID);
+        console.log('Service found:', SERVICE_UUID);
 
         statusEl.textContent = 'Getting characteristics...';
-
-        // Get characteristics
         notifyChar = await service.getCharacteristic(NOTIFY_UUID);
         writeChar = await service.getCharacteristic(WRITE_UUID);
+        console.log('Characteristics found');
 
         statusEl.textContent = 'Starting notifications...';
-
-        // Start notifications
         await notifyChar.startNotifications();
         notifyChar.addEventListener('characteristicvaluechanged', handleWeightNotification);
+        console.log('Notifications started');
 
         statusEl.textContent = 'Setting units...';
-
-        // Send startup command to set unit to grams
         await sendCommand(UNIT_G_CMD);
+        console.log('Unit set to grams');
 
         // Save device ID for auto-reconnect
         localStorage.setItem('scaleDeviceId', device.id);
@@ -186,11 +187,11 @@ async function connectToDevice(targetDevice) {
         statusEl.className = 'status connected';
 
     } catch (error) {
-        console.error('Connection error:', error);
+        console.error('Connection error detail:', error.name, error.message);
         statusEl.textContent = 'Connection failed: ' + error.message;
         throw error;
     } finally {
-        connectBtn.disabled = false;
+        if (connectBtn) connectBtn.disabled = false;
     }
 }
 
