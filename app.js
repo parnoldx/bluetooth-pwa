@@ -27,18 +27,6 @@ const connectBtn = document.getElementById('connectBtn');
 const connectAnyBtn = document.getElementById('connectAnyBtn');
 const tareBtn = document.getElementById('tareBtn');
 const deviceInfoEl = document.getElementById('deviceInfo');
-const debugLogEl = document.getElementById('debugLog');
-
-// Debug logging
-function debug(msg) {
-    console.log(msg);
-    if (debugLogEl) {
-        const line = document.createElement('div');
-        line.textContent = new Date().toLocaleTimeString() + ': ' + msg;
-        debugLogEl.appendChild(line);
-        debugLogEl.scrollTop = debugLogEl.scrollHeight;
-    }
-}
 
 // State
 let device = null;
@@ -46,6 +34,7 @@ let server = null;
 let notifyChar = null;
 let writeChar = null;
 let isConnected = false;
+let hasReceivedData = false;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 2000;
@@ -107,11 +96,11 @@ async function handleConnect() {
             optionalServices: [SERVICE_UUID]
         });
 
-        debug('Device selected via filter: ' + device.name + ' (' + device.id + ')');
+        console.log('Device selected via filter: ' + device.name + ' (' + device.id + ')');
         await connectToDevice(device);
 
     } catch (error) {
-        debug('Filter connect error: ' + error.name + ' - ' + error.message);
+        console.log('Filter connect error: ' + error.name + ' - ' + error.message);
         if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
         if (connectBtn) connectBtn.disabled = false;
         if (connectAnyBtn) connectAnyBtn.disabled = false;
@@ -135,11 +124,11 @@ async function handleConnectAny() {
             optionalServices: [SERVICE_UUID, 'battery_service', 'device_information']
         });
 
-        debug('Device selected via acceptAll: ' + device.name + ' (' + device.id + ')');
+        console.log('Device selected via acceptAll: ' + device.name + ' (' + device.id + ')');
         await connectToDevice(device);
 
     } catch (error) {
-        debug('AcceptAll connect error: ' + error.name + ' - ' + error.message);
+        console.log('AcceptAll connect error: ' + error.name + ' - ' + error.message);
         if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
         if (connectBtn) connectBtn.disabled = false;
         if (connectAnyBtn) connectAnyBtn.disabled = false;
@@ -149,7 +138,7 @@ async function handleConnectAny() {
 async function connectToDevice(targetDevice) {
     try {
         if (statusEl) statusEl.textContent = 'Connecting to GATT server...';
-        debug('Connecting to device: ' + targetDevice.name + ' (' + targetDevice.id + ')');
+        console.log('Connecting to device: ' + targetDevice.name + ' (' + targetDevice.id + ')');
 
         device = targetDevice;
 
@@ -163,25 +152,25 @@ async function connectToDevice(targetDevice) {
             setTimeout(() => reject(new Error('Connection timeout')), 10000)
         );
         server = await Promise.race([connectPromise, timeoutPromise]);
-        debug('GATT connected');
+        console.log('GATT connected');
 
         if (statusEl) statusEl.textContent = 'Getting service...';
         const service = await server.getPrimaryService(SERVICE_UUID);
-        debug('Service found: ' + SERVICE_UUID);
+        console.log('Service found: ' + SERVICE_UUID);
 
         if (statusEl) statusEl.textContent = 'Getting characteristics...';
         notifyChar = await service.getCharacteristic(NOTIFY_UUID);
         writeChar = await service.getCharacteristic(WRITE_UUID);
-        debug('Characteristics found');
+        console.log('Characteristics found');
 
         if (statusEl) statusEl.textContent = 'Starting notifications...';
         await notifyChar.startNotifications();
         notifyChar.addEventListener('characteristicvaluechanged', handleWeightNotification);
-        debug('Notifications started');
+        console.log('Notifications started');
 
         if (statusEl) statusEl.textContent = 'Setting units...';
         await sendCommand(UNIT_G_CMD);
-        debug('Unit set to grams');
+        console.log('Unit set to grams');
 
         // Save device ID for auto-reconnect
         localStorage.setItem('scaleDeviceId', device.id);
@@ -196,12 +185,12 @@ async function connectToDevice(targetDevice) {
         deviceInfoEl.classList.remove('hidden');
 
         if (statusEl) {
-            statusEl.textContent = 'Connected - waiting for data...';
+            statusEl.textContent = 'Connected';
             statusEl.className = 'status connected';
         }
 
     } catch (error) {
-        debug('Connection error: ' + error.name + ' - ' + error.message);
+        console.log('Connection error: ' + error.name + ' - ' + error.message);
         if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
         throw error;
     } finally {
@@ -212,6 +201,7 @@ async function connectToDevice(targetDevice) {
 function handleDisconnect() {
     const wasConnected = isConnected;
     isConnected = false;
+    hasReceivedData = false;
     updateUIDisconnected();
     statusEl.textContent = 'Disconnected';
     statusEl.className = 'status disconnected';
@@ -238,7 +228,7 @@ async function disconnect() {
         try {
             await notifyChar.stopNotifications();
         } catch (e) {
-            debug('Stop notifications warning: ' + e.message);
+            console.log('Stop notifications warning: ' + e.message);
         }
     }
 
@@ -255,18 +245,18 @@ function handleWeightNotification(event) {
 
     // Only log occasionally to avoid spam
     if (Math.random() < 0.05) {
-        debug('Data: ' + Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '));
+        console.log('Data: ' + Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '));
     }
 
     // Verify packet length
     if (data.length !== PACKET_LENGTH) {
-        debug('Bad packet length: ' + data.length);
+        console.log('Bad packet length: ' + data.length);
         return;
     }
 
     // Verify header
     if (data[0] !== HEADER_BYTE) {
-        debug('Bad header: ' + data[0].toString(16));
+        console.log('Bad header: ' + data[0].toString(16));
         return;
     }
 
@@ -288,6 +278,12 @@ function handleWeightNotification(event) {
 
     // Update stability indicator
     if (stabilityEl) stabilityEl.className = 'stability ' + (isStable ? 'stable' : 'unstable');
+
+    // Update status on first data received
+    if (!hasReceivedData) {
+        hasReceivedData = true;
+        if (statusEl) statusEl.textContent = 'Receiving data';
+    }
 }
 
 async function handleTare() {
@@ -305,7 +301,7 @@ async function handleTare() {
             }
         }, 1000);
     } catch (error) {
-        debug('Tare error: ' + error.message);
+        console.log('Tare error: ' + error.message);
         if (statusEl) statusEl.textContent = 'Tare failed: ' + error.message;
     }
 }
