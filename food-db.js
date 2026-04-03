@@ -5,6 +5,25 @@ import { findFoodByBarcode, addCustomFood, getCustomFoods } from './database.js'
 // Load local foods database
 let localFoods = [];
 
+// Detect device language - German iOS uses 'de-DE', 'de-AT', 'de-CH', etc.
+export function getDeviceLocale() {
+  return navigator.language || navigator.userLanguage || 'en-US';
+}
+
+export function isGermanLocale() {
+  const locale = getDeviceLocale().toLowerCase();
+  return locale.startsWith('de');
+}
+
+// Get localized name for a food
+export function getLocalizedName(food) {
+  if (!food) return 'Unknown';
+  if (isGermanLocale() && food.name_de) {
+    return food.name_de;
+  }
+  return food.name || 'Unknown';
+}
+
 export async function loadLocalFoods() {
   try {
     const response = await fetch('foods.json');
@@ -22,10 +41,12 @@ export async function loadLocalFoods() {
 loadLocalFoods();
 
 // Search local foods by name (case-insensitive, partial match)
+// Searches in both English and German names
 export async function searchLocalFoods(query) {
   if (!query || query.length < 2) return [];
 
   const lowerQuery = query.toLowerCase();
+  const isGerman = isGermanLocale();
 
   // Get custom foods from IndexedDB
   const customFoods = await getCustomFoods();
@@ -35,17 +56,25 @@ export async function searchLocalFoods(query) {
 
   // Score and sort results
   const scored = allFoods.map(food => {
-    const name = food.name.toLowerCase();
+    const nameEn = (food.name || '').toLowerCase();
+    const nameDe = (food.name_de || '').toLowerCase();
     let score = 0;
 
-    // Exact match
-    if (name === lowerQuery) score += 100;
-    // Starts with query
-    else if (name.startsWith(lowerQuery)) score += 50;
-    // Contains query as whole word
-    else if (name.includes(' ' + lowerQuery)) score += 30;
-    // Contains query
-    else if (name.includes(lowerQuery)) score += 10;
+    // Check English name
+    if (nameEn === lowerQuery) score += 100;
+    else if (nameEn.startsWith(lowerQuery)) score += 50;
+    else if (nameEn.includes(' ' + lowerQuery)) score += 30;
+    else if (nameEn.includes(lowerQuery)) score += 10;
+
+    // Check German name (only if German locale or query matches)
+    if (nameDe === lowerQuery) score += 100;
+    else if (nameDe.startsWith(lowerQuery)) score += 50;
+    else if (nameDe.includes(' ' + lowerQuery)) score += 30;
+    else if (nameDe.includes(lowerQuery)) score += 10;
+
+    // Boost score for exact match in current locale language
+    if (isGerman && nameDe === lowerQuery) score += 20;
+    if (!isGerman && nameEn === lowerQuery) score += 20;
 
     return { food, score };
   }).filter(item => item.score > 0);
@@ -119,9 +148,15 @@ function normalizeOpenFoodFactsData(product, barcode) {
     calories = energy > 1000 ? energy / 4.184 : energy;
   }
 
+  // For German locale, try to use German product name from OpenFoodFacts
+  const isGerman = isGermanLocale();
+  const productName = isGerman && product.product_name_de
+    ? product.product_name_de
+    : (product.product_name || product.generic_name || 'Unknown Product');
+
   return {
     barcode,
-    name: product.product_name || product.generic_name || 'Unknown Product',
+    name: productName,
     brand: product.brands,
     calories: Math.round(calories || 0),
     protein: Math.round((nutriments.proteins_100g || 0) * 10) / 10,
@@ -144,6 +179,7 @@ function normalizeFoodData(food) {
     id: food.id || food.barcode,
     barcode: food.barcode,
     name: food.name || 'Unknown',
+    name_de: food.name_de,
     brand: food.brand,
     calories: Math.round(food.calories || 0),
     protein: Math.round((food.protein || 0) * 10) / 10,

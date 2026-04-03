@@ -28,7 +28,8 @@ import {
 import {
   getFoodByBarcode,
   calculateNutrition,
-  getQuickSuggestions
+  getQuickSuggestions,
+  getLocalizedName
 } from './food-db.js';
 
 // State
@@ -350,7 +351,7 @@ async function onBarcodeScanned(barcode) {
     isScaleMode = true;
     openConfirmModal(food);
 
-    showToast(`Found: ${food.name}`, 'success');
+    showToast(`Found: ${getLocalizedName(food)}`, 'success');
   } catch (error) {
     hideLoading();
     scannerStatus.textContent = 'Product not found';
@@ -389,7 +390,7 @@ async function loadQuickFoods() {
 
   quickFoodsList.innerHTML = foods.map(food => `
     <span class="quick-food-chip" data-food='${escapeHtml(JSON.stringify(food))}'>
-      ${escapeHtml(food.name)}
+      ${escapeHtml(getLocalizedName(food))}
     </span>
   `).join('');
 
@@ -425,7 +426,7 @@ function renderSearchResults(foods) {
   searchResults.innerHTML = foods.map(food => `
     <div class="food-result" data-food='${escapeHtml(JSON.stringify(food))}'>
       <div class="food-result-info">
-        <div class="food-result-name">${escapeHtml(food.name)}</div>
+        <div class="food-result-name">${escapeHtml(getLocalizedName(food))}</div>
         ${food.brand ? `<div class="food-result-brand">${escapeHtml(food.brand)}</div>` : ''}
       </div>
       <div class="food-result-nutrition">
@@ -478,8 +479,8 @@ function onVoiceButtonClick() {
 function openConfirmModal(food) {
   selectedFood = food;
 
-  // Set food info
-  confirmFoodName.textContent = food.name;
+  // Set food info with localized name
+  confirmFoodName.textContent = getLocalizedName(food);
   confirmFoodBrand.textContent = food.brand || '';
   confirmCalories.textContent = food.calories || 0;
 
