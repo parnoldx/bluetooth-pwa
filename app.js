@@ -100,26 +100,38 @@ async function handleConnect() {
 
 async function connectToDevice(targetDevice) {
     try {
-        statusEl.textContent = 'Connecting...';
+        statusEl.textContent = 'Connecting to GATT server...';
 
         device = targetDevice;
 
         // Listen for disconnection
         device.addEventListener('gattserverdisconnected', handleDisconnect);
 
-        // Connect to GATT server
-        server = await device.gatt.connect();
+        // Connect to GATT server with timeout
+        const connectPromise = device.gatt.connect();
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        );
+        server = await Promise.race([connectPromise, timeoutPromise]);
+
+        statusEl.textContent = 'Getting service...';
 
         // Get service
         const service = await server.getPrimaryService(SERVICE_UUID);
+
+        statusEl.textContent = 'Getting characteristics...';
 
         // Get characteristics
         notifyChar = await service.getCharacteristic(NOTIFY_UUID);
         writeChar = await service.getCharacteristic(WRITE_UUID);
 
+        statusEl.textContent = 'Starting notifications...';
+
         // Start notifications
         await notifyChar.startNotifications();
         notifyChar.addEventListener('characteristicvaluechanged', handleWeightNotification);
+
+        statusEl.textContent = 'Setting units...';
 
         // Send startup command to set unit to grams
         await sendCommand(UNIT_G_CMD);
@@ -136,7 +148,7 @@ async function connectToDevice(targetDevice) {
         deviceInfoEl.textContent = `Device: ${device.name || 'Unknown'} (${device.id})`;
         deviceInfoEl.classList.remove('hidden');
 
-        statusEl.textContent = 'Connected';
+        statusEl.textContent = 'Connected - waiting for data...';
         statusEl.className = 'status connected';
 
     } catch (error) {
@@ -192,15 +204,17 @@ function handleWeightNotification(event) {
     const value = event.target.value;
     const data = new Uint8Array(value.buffer);
 
+    console.log('Received data:', Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '), 'Length:', data.length);
+
     // Verify packet length
     if (data.length !== PACKET_LENGTH) {
-        console.warn('Unexpected packet length:', data.length);
+        console.warn('Unexpected packet length:', data.length, 'expected', PACKET_LENGTH);
         return;
     }
 
     // Verify header
     if (data[0] !== HEADER_BYTE) {
-        console.warn('Bad header:', data[0]);
+        console.warn('Bad header:', data[0].toString(16), 'expected', HEADER_BYTE.toString(16));
         return;
     }
 
@@ -223,7 +237,7 @@ function handleWeightNotification(event) {
     // Update stability indicator
     stabilityEl.className = 'stability ' + (isStable ? 'stable' : 'unstable');
 
-    console.log('Weight:', weight, 'g', 'Stable:', isStable, 'Raw:', data);
+    console.log('Weight:', weight, 'g', 'Stable:', isStable, 'Raw bytes:', weightRaw);
 }
 
 async function handleTare() {
