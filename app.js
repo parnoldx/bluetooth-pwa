@@ -85,7 +85,7 @@ async function handleReconnect() {
         const savedName = localStorage.getItem('scaleDeviceName');
 
         // Use name prefix filter based on saved device
-        const namePrefix = savedName && savedName.startsWith('QN') ? 'Q' : (savedName ? savedName.charAt(0) : '');
+        const namePrefix = savedName && savedName.startsWith('QN') ? 'QN-' : '';
 
         device = await navigator.bluetooth.requestDevice({
             filters: namePrefix ? [{ namePrefix }] : undefined,
@@ -130,10 +130,10 @@ async function handleConnect() {
         connectBtn.disabled = true;
         connectAnyBtn.disabled = true;
 
-        // Request device with name prefix filter (more permissive than exact match)
+        // Request device with name prefix filter - QN- for Arboleaf scales
         device = await navigator.bluetooth.requestDevice({
             filters: [
-                { namePrefix: 'Q' }
+                { namePrefix: 'QN-' }
             ],
             optionalServices: [SERVICE_UUID]
         });
