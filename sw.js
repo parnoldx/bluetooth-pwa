@@ -1,12 +1,19 @@
-// Service Worker for Arboleaf Scale PWA
+// Service Worker for Calorie Tracker PWA
 
-const CACHE_NAME = 'arboleaf-scale-v2';
+const CACHE_NAME = 'calorie-tracker-v8';
 const urlsToCache = [
     '.',
     'index.html',
     'app.js',
+    'main.js',
     'styles.css',
-    'manifest.json'
+    'manifest.json',
+    'database.js',
+    'food-db.js',
+    'scan.js',
+    'voice-input.js',
+    'log.js',
+    'foods.json'
 ];
 
 self.addEventListener('install', event => {

@@ -1,4 +1,5 @@
 // Arboleaf Scale Web Bluetooth PWA
+// This file handles the Bluetooth scale connection
 
 // UUIDs from protocol spec
 const SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
@@ -22,7 +23,6 @@ const WEIGHT_DIVISOR = 10;
 // DOM elements
 const weightEl = document.getElementById('weight');
 const stabilityEl = document.getElementById('stability');
-const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
 const connectAnyBtn = document.getElementById('connectAnyBtn');
 const tareBtn = document.getElementById('tareBtn');
@@ -39,10 +39,16 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 2000;
 
+// Make isConnected available globally
+window.isConnected = false;
+
 // Check if Web Bluetooth is supported
 if (!navigator.bluetooth) {
-    statusEl.textContent = 'Web Bluetooth not supported - use Android Chrome';
-    connectBtn.disabled = true;
+  const scaleStatusEl = document.getElementById('scaleStatus');
+  if (scaleStatusEl) {
+    scaleStatusEl.textContent = 'Web Bluetooth not supported - use Android Chrome';
+  }
+  if (connectBtn) connectBtn.disabled = true;
 }
 
 // Event listeners
@@ -52,307 +58,271 @@ tareBtn.addEventListener('click', handleTare);
 
 // Check for saved device on load
 window.addEventListener('load', () => {
-    const savedDeviceId = localStorage.getItem('scaleDeviceId');
-    const savedDeviceName = localStorage.getItem('scaleDeviceName');
-    if (savedDeviceId && navigator.bluetooth) {
-        // Update button text to show saved device
-        connectBtn.textContent = `Reconnect to ${savedDeviceName || 'Scale'}`;
-    }
+  const savedDeviceId = localStorage.getItem('scaleDeviceId');
+  const savedDeviceName = localStorage.getItem('scaleDeviceName');
+  if (savedDeviceId && navigator.bluetooth) {
+    connectBtn.textContent = `Reconnect to ${savedDeviceName || 'Scale'}`;
+  }
 });
 
 async function tryAutoReconnect() {
-    try {
-        // Check if getDevices is available (requires chrome://flags on some versions)
-        if (navigator.bluetooth.getDevices) {
-            const devices = await navigator.bluetooth.getDevices();
-            const savedId = localStorage.getItem('scaleDeviceId');
-            const matchingDevice = devices.find(d => d.id === savedId);
-            if (matchingDevice) {
-                // Attempt to connect (device may or may not be currently connected)
-                await connectToDevice(matchingDevice);
-            }
-        }
-    } catch (e) {
-        console.log('Auto-reconnect failed, user will need to connect manually:', e.message);
+  try {
+    if (navigator.bluetooth.getDevices) {
+      const devices = await navigator.bluetooth.getDevices();
+      const savedId = localStorage.getItem('scaleDeviceId');
+      const matchingDevice = devices.find(d => d.id === savedId);
+      if (matchingDevice) {
+        await connectToDevice(matchingDevice);
+      }
     }
+  } catch (e) {
+    console.log('Auto-reconnect failed:', e.message);
+  }
 }
 
 async function handleConnect() {
-    try {
-        if (isConnected) {
-            await disconnect();
-            return;
-        }
-
-        statusEl.textContent = 'Scanning for Arboleaf scale...';
-        connectBtn.disabled = true;
-        connectAnyBtn.disabled = true;
-
-        // Request device with name prefix filter - QN for Arboleaf scales
-        device = await navigator.bluetooth.requestDevice({
-            filters: [
-                { namePrefix: 'QN' }
-            ],
-            optionalServices: [SERVICE_UUID]
-        });
-
-        console.log('Device selected via filter: ' + device.name + ' (' + device.id + ')');
-        await connectToDevice(device);
-
-    } catch (error) {
-        console.log('Filter connect error: ' + error.name + ' - ' + error.message);
-        if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
-        if (connectBtn) connectBtn.disabled = false;
-        if (connectAnyBtn) connectAnyBtn.disabled = false;
+  try {
+    if (isConnected) {
+      await disconnect();
+      return;
     }
+
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Scanning for scale...';
+    connectBtn.disabled = true;
+    connectAnyBtn.disabled = true;
+
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: 'QN' }],
+      optionalServices: [SERVICE_UUID]
+    });
+
+    console.log('Device selected:', device.name, device.id);
+    await connectToDevice(device);
+
+  } catch (error) {
+    console.log('Connect error:', error.name, error.message);
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Connection failed: ' + error.message;
+    connectBtn.disabled = false;
+    connectAnyBtn.disabled = false;
+  }
 }
 
 async function handleConnectAny() {
-    try {
-        if (isConnected) {
-            await disconnect();
-            return;
-        }
-
-        statusEl.textContent = 'Scanning all BLE devices...';
-        connectBtn.disabled = true;
-        connectAnyBtn.disabled = true;
-
-        // Request device WITHOUT service filter - shows all BLE devices
-        device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [SERVICE_UUID, 'battery_service', 'device_information']
-        });
-
-        console.log('Device selected via acceptAll: ' + device.name + ' (' + device.id + ')');
-        await connectToDevice(device);
-
-    } catch (error) {
-        console.log('AcceptAll connect error: ' + error.name + ' - ' + error.message);
-        if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
-        if (connectBtn) connectBtn.disabled = false;
-        if (connectAnyBtn) connectAnyBtn.disabled = false;
+  try {
+    if (isConnected) {
+      await disconnect();
+      return;
     }
+
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Scanning all BLE devices...';
+    connectBtn.disabled = true;
+    connectAnyBtn.disabled = true;
+
+    device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [SERVICE_UUID, 'battery_service', 'device_information']
+    });
+
+    console.log('Device selected:', device.name, device.id);
+    await connectToDevice(device);
+
+  } catch (error) {
+    console.log('Connect error:', error.name, error.message);
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Connection failed: ' + error.message;
+    connectBtn.disabled = false;
+    connectAnyBtn.disabled = false;
+  }
 }
 
 async function connectToDevice(targetDevice) {
-    try {
-        if (statusEl) statusEl.textContent = 'Connecting to GATT server...';
-        console.log('Connecting to device: ' + targetDevice.name + ' (' + targetDevice.id + ')');
+  try {
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Connecting...';
 
-        device = targetDevice;
+    device = targetDevice;
+    device.addEventListener('gattserverdisconnected', handleDisconnect);
 
-        // Listen for disconnection
-        device.addEventListener('gattserverdisconnected', handleDisconnect);
+    const connectPromise = device.gatt.connect();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout')), 10000)
+    );
+    server = await Promise.race([connectPromise, timeoutPromise]);
 
-        // Connect to GATT server with timeout
-        if (statusEl) statusEl.textContent = 'Connecting to GATT...';
-        const connectPromise = device.gatt.connect();
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Connection timeout')), 10000)
-        );
-        server = await Promise.race([connectPromise, timeoutPromise]);
-        console.log('GATT connected');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Getting service...';
+    const service = await server.getPrimaryService(SERVICE_UUID);
 
-        if (statusEl) statusEl.textContent = 'Getting service...';
-        const service = await server.getPrimaryService(SERVICE_UUID);
-        console.log('Service found: ' + SERVICE_UUID);
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Getting characteristics...';
+    notifyChar = await service.getCharacteristic(NOTIFY_UUID);
+    writeChar = await service.getCharacteristic(WRITE_UUID);
 
-        if (statusEl) statusEl.textContent = 'Getting characteristics...';
-        notifyChar = await service.getCharacteristic(NOTIFY_UUID);
-        writeChar = await service.getCharacteristic(WRITE_UUID);
-        console.log('Characteristics found');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Starting notifications...';
+    await notifyChar.startNotifications();
+    notifyChar.addEventListener('characteristicvaluechanged', handleWeightNotification);
 
-        if (statusEl) statusEl.textContent = 'Starting notifications...';
-        await notifyChar.startNotifications();
-        notifyChar.addEventListener('characteristicvaluechanged', handleWeightNotification);
-        console.log('Notifications started');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Setting units...';
+    await sendCommand(UNIT_G_CMD);
 
-        if (statusEl) statusEl.textContent = 'Setting units...';
-        await sendCommand(UNIT_G_CMD);
-        console.log('Unit set to grams');
+    // Save device ID
+    localStorage.setItem('scaleDeviceId', device.id);
+    localStorage.setItem('scaleDeviceName', device.name || 'Unknown');
 
-        // Save device ID for auto-reconnect
-        localStorage.setItem('scaleDeviceId', device.id);
-        localStorage.setItem('scaleDeviceName', device.name || 'Unknown');
+    // Update state
+    isConnected = true;
+    window.isConnected = true;
+    updateUIConnected();
 
-        // Update UI
-        isConnected = true;
-        updateUIConnected();
+    // Show device info
+    deviceInfoEl.textContent = `Device: ${device.name || 'Unknown'} (${device.id})`;
+    deviceInfoEl.classList.remove('hidden');
 
-        // Show device info
-        deviceInfoEl.textContent = `Device: ${device.name || 'Unknown'} (${device.id})`;
-        deviceInfoEl.classList.remove('hidden');
-
-        if (statusEl) {
-            statusEl.textContent = 'Connected';
-            statusEl.className = 'status connected';
-        }
-
-    } catch (error) {
-        console.log('Connection error: ' + error.name + ' - ' + error.message);
-        if (statusEl) statusEl.textContent = 'Connection failed: ' + error.message;
-        throw error;
-    } finally {
-        if (connectBtn) connectBtn.disabled = false;
+    if (scaleStatusEl) {
+      scaleStatusEl.textContent = 'Connected';
+      scaleStatusEl.className = 'scale-status connected';
     }
+
+  } catch (error) {
+    console.log('Connection error:', error.name, error.message);
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Connection failed: ' + error.message;
+    throw error;
+  } finally {
+    connectBtn.disabled = false;
+  }
 }
 
 function handleDisconnect() {
-    const wasConnected = isConnected;
-    isConnected = false;
-    hasReceivedData = false;
-    updateUIDisconnected();
-    statusEl.textContent = 'Disconnected';
-    statusEl.className = 'status disconnected';
+  const wasConnected = isConnected;
+  isConnected = false;
+  window.isConnected = false;
+  hasReceivedData = false;
+  updateUIDisconnected();
 
-    // Attempt auto-reconnect if connection was previously established
-    if (wasConnected && device && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        reconnectAttempts++;
-        statusEl.textContent = `Reconnecting... (attempt ${reconnectAttempts})`;
-        setTimeout(() => {
-            if (!isConnected) {
-                connectToDevice(device).catch(() => {
-                    // Connection failed, will retry or give up
-                });
-            }
-        }, RECONNECT_DELAY);
-    } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        statusEl.textContent = 'Connection lost - please reconnect manually';
-        reconnectAttempts = 0;
+  const scaleStatusEl = document.getElementById('scaleStatus');
+  if (scaleStatusEl) {
+    scaleStatusEl.textContent = 'Disconnected';
+    scaleStatusEl.className = 'scale-status disconnected';
+  }
+
+  // Auto-reconnect
+  if (wasConnected && device && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+    reconnectAttempts++;
+    if (scaleStatusEl) {
+      scaleStatusEl.textContent = `Reconnecting... (attempt ${reconnectAttempts})`;
     }
+    setTimeout(() => {
+      if (!isConnected) {
+        connectToDevice(device).catch(() => {});
+      }
+    }, RECONNECT_DELAY);
+  } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Connection lost - please reconnect manually';
+    reconnectAttempts = 0;
+  }
 }
 
 async function disconnect() {
-    if (notifyChar) {
-        try {
-            await notifyChar.stopNotifications();
-        } catch (e) {
-            console.log('Stop notifications warning: ' + e.message);
-        }
-    }
-
-    if (server && server.connected) {
-        await server.disconnect();
-    }
-
-    handleDisconnect();
+  if (notifyChar) {
+    try { await notifyChar.stopNotifications(); } catch (e) {}
+  }
+  if (server && server.connected) {
+    await server.disconnect();
+  }
+  handleDisconnect();
 }
 
-function handleWeightNotification(event) {
-    const value = event.target.value;
-    const data = new Uint8Array(value.buffer);
+// Make handleWeightNotification available globally for main.js to extend
+window.handleWeightNotification = function(event) {
+  const value = event.target.value;
+  const data = new Uint8Array(value.buffer);
 
-    // Only log occasionally to avoid spam
-    if (Math.random() < 0.05) {
-        console.log('Data: ' + Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '));
+  // Verify packet
+  if (data.length !== PACKET_LENGTH || data[0] !== HEADER_BYTE) {
+    return;
+  }
+
+  // Decode
+  const status = data[STATUS_BYTE];
+  const isStable = (status & STABLE_BIT) !== 0;
+  const isNegative = (status & NEGATIVE_BIT) !== 0;
+
+  const weightRaw = (data[WEIGHT_HIGH_BYTE] << 8) | data[WEIGHT_LOW_BYTE];
+  let weight = weightRaw / WEIGHT_DIVISOR;
+  if (isNegative) weight = -weight;
+
+  // Update UI
+  if (weightEl) weightEl.textContent = weight.toFixed(1);
+  if (stabilityEl) stabilityEl.className = 'stability ' + (isStable ? 'stable' : 'unstable');
+
+  if (!hasReceivedData) {
+    hasReceivedData = true;
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl && isConnected) {
+      scaleStatusEl.textContent = 'Receiving data';
     }
-
-    // Verify packet length
-    if (data.length !== PACKET_LENGTH) {
-        console.log('Bad packet length: ' + data.length);
-        return;
-    }
-
-    // Verify header
-    if (data[0] !== HEADER_BYTE) {
-        console.log('Bad header: ' + data[0].toString(16));
-        return;
-    }
-
-    // Decode weight
-    const status = data[STATUS_BYTE];
-    const isStable = (status & STABLE_BIT) !== 0;
-    const isNegative = (status & NEGATIVE_BIT) !== 0;
-
-    // Weight in 0.1g units, big-endian uint16
-    const weightRaw = (data[WEIGHT_HIGH_BYTE] << 8) | data[WEIGHT_LOW_BYTE];
-    let weight = weightRaw / WEIGHT_DIVISOR;
-
-    if (isNegative) {
-        weight = -weight;
-    }
-
-    // Update UI
-    if (weightEl) weightEl.textContent = weight.toFixed(1);
-
-    // Update stability indicator
-    if (stabilityEl) stabilityEl.className = 'stability ' + (isStable ? 'stable' : 'unstable');
-
-    // Update status on first data received
-    if (!hasReceivedData) {
-        hasReceivedData = true;
-        if (statusEl) statusEl.textContent = 'Receiving data';
-    }
-}
+  }
+};
 
 async function handleTare() {
-    if (!isConnected || !writeChar) {
-        if (statusEl) statusEl.textContent = 'Not connected';
-        return;
-    }
+  if (!isConnected || !writeChar) {
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Not connected';
+    return;
+  }
 
-    try {
-        await sendCommand(TARE_CMD);
-        if (statusEl) statusEl.textContent = 'Tare sent';
-        setTimeout(() => {
-            if (isConnected && statusEl) {
-                statusEl.textContent = 'Connected';
-            }
-        }, 1000);
-    } catch (error) {
-        console.log('Tare error: ' + error.message);
-        if (statusEl) statusEl.textContent = 'Tare failed: ' + error.message;
-    }
+  try {
+    await sendCommand(TARE_CMD);
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Tare sent';
+    setTimeout(() => {
+      if (isConnected && scaleStatusEl) {
+        scaleStatusEl.textContent = 'Connected';
+      }
+    }, 1000);
+  } catch (error) {
+    console.log('Tare error:', error.message);
+    const scaleStatusEl = document.getElementById('scaleStatus');
+    if (scaleStatusEl) scaleStatusEl.textContent = 'Tare failed';
+  }
 }
 
 async function sendCommand(cmd) {
-    if (!writeChar) {
-        throw new Error('Not connected');
-    }
-    await writeChar.writeValue(cmd);
+  if (!writeChar) throw new Error('Not connected');
+  await writeChar.writeValue(cmd);
 }
 
-function updateUIConnected() {
-    reconnectAttempts = 0;
-    if (connectBtn) connectBtn.classList.add('hidden');
-    if (connectAnyBtn) connectAnyBtn.classList.add('hidden');
-    if (tareBtn) tareBtn.disabled = false;
-}
+// Make updateUI functions available globally for main.js to extend
+window.updateUIConnected = function() {
+  reconnectAttempts = 0;
+  connectBtn.classList.add('hidden');
+  connectAnyBtn.classList.add('hidden');
+  tareBtn.disabled = false;
+};
 
-function updateUIDisconnected() {
-    const savedDeviceId = localStorage.getItem('scaleDeviceId');
-    const savedDeviceName = localStorage.getItem('scaleDeviceName');
+window.updateUIDisconnected = function() {
+  const savedDeviceId = localStorage.getItem('scaleDeviceId');
+  const savedDeviceName = localStorage.getItem('scaleDeviceName');
 
-    if (connectBtn) {
-        connectBtn.textContent = savedDeviceId ? `Reconnect to ${savedDeviceName || 'Scale'}` : 'Connect (QN-KS)';
-        connectBtn.classList.remove('hidden');
-        connectBtn.classList.add('btn-primary');
-        connectBtn.classList.remove('btn-secondary');
-        connectBtn.disabled = false;
-    }
+  connectBtn.textContent = savedDeviceId ? `Reconnect to ${savedDeviceName || 'Scale'}` : 'Connect Scale';
+  connectBtn.classList.remove('hidden');
+  connectAnyBtn.classList.remove('hidden');
+  tareBtn.disabled = true;
+  if (weightEl) weightEl.textContent = '---';
+  if (stabilityEl) stabilityEl.className = 'stability';
+  device = null;
+  server = null;
+  notifyChar = null;
+  writeChar = null;
+};
 
-    if (connectAnyBtn) {
-        connectAnyBtn.textContent = 'Connect (Other)';
-        connectAnyBtn.classList.remove('hidden');
-        connectAnyBtn.classList.remove('btn-secondary');
-        connectAnyBtn.classList.add('btn-secondary');
-        connectAnyBtn.disabled = false;
-    }
-    if (tareBtn) tareBtn.disabled = true;
-    if (weightEl) weightEl.textContent = '---';
-    if (stabilityEl) stabilityEl.className = 'stability';
-    device = null;
-    server = null;
-    notifyChar = null;
-    writeChar = null;
-}
-
-// Service Worker registration for PWA
+// Service Worker registration
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('SW registered:', reg))
-            .catch(err => console.log('SW registration failed:', err));
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg))
+      .catch(err => console.log('SW registration failed:', err));
+  });
 }
