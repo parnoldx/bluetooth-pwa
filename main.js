@@ -7,12 +7,9 @@ import {
   cleanup as cleanupScanner
 } from './scan.js';
 import {
-  startVoiceInput,
   searchFoods,
   parseWeightFromInput,
-  isVoiceSupported,
-  normalizeFoodQuery,
-  getVoiceErrorMessage
+  normalizeFoodQuery
 } from './voice-input.js';
 import {
   initLog,
@@ -74,13 +71,12 @@ const closeScannerBtn = document.getElementById('closeScannerBtn');
 const scannerStatus = document.getElementById('scannerStatus');
 
 // DOM Elements - Search
-const voiceInputBtn = document.getElementById('voiceInputBtn');
+const searchFoodBtn = document.getElementById('searchFoodBtn');
 const searchInput = document.getElementById('searchInput');
 const closeSearchBtn = document.getElementById('closeSearchBtn');
 const searchResults = document.getElementById('searchResults');
 const quickFoodsList = document.getElementById('quickFoodsList');
-const startVoiceBtn = document.getElementById('startVoiceBtn');
-const voiceStatus = document.getElementById('voiceStatus');
+const weightLabel = document.getElementById('weightLabel');
 
 // DOM Elements - Confirmation
 const confirmFoodName = document.getElementById('confirmFoodName');
@@ -219,10 +215,12 @@ function setupEventListeners() {
   closeScannerBtn.addEventListener('click', closeScannerModal);
 
   // Search
-  voiceInputBtn.addEventListener('click', openSearchModal);
+  searchFoodBtn.addEventListener('click', () => {
+    isScaleMode = false; // Manual entry mode
+    openSearchModal();
+  });
   closeSearchBtn.addEventListener('click', closeSearchModal);
   searchInput.addEventListener('input', debounce(onSearchInput, 300));
-  startVoiceBtn.addEventListener('click', onVoiceButtonClick);
 
   // Confirmation
   closeConfirmBtn.addEventListener('click', closeConfirmModal);
@@ -269,7 +267,7 @@ function onLogUpdate({ entries, dailyTotals, date }) {
 
 function renderFoodLog(entries) {
   if (entries.length === 0) {
-    foodLogEl.innerHTML = '<p class="empty-log">No entries yet. Add food from the scale or search.</p>';
+    foodLogEl.innerHTML = '<p class="empty-log">No entries yet. Put food on scale and tap "Add to Log".</p>';
     return;
   }
 
@@ -381,12 +379,12 @@ async function openSearchModal() {
   searchInput.value = '';
   searchResults.innerHTML = '';
   await loadQuickFoods();
-  searchInput.focus();
+  // Focus input to trigger native keyboard (with dictation button)
+  setTimeout(() => searchInput.focus(), 100);
 }
 
 async function closeSearchModal() {
   searchModal.classList.add('hidden');
-  stopVoiceInput();
 }
 
 async function loadQuickFoods() {
@@ -507,7 +505,24 @@ function openConfirmModal(food) {
   confirmFoodBrand.textContent = food.brand || '';
   confirmCalories.textContent = food.calories || 0;
 
-  // Set default weight
+  // Set weight based on mode
+  if (isScaleMode && currentWeight > 0) {
+    // Scale mode: use scale weight directly
+    currentFoodWeight = Math.round(currentWeight);
+    weightLabel.textContent = 'Scale Weight (g):';
+    useScaleWeightBtn.classList.add('hidden');
+  } else {
+    // Manual mode: show editable weight and Use Scale button if available
+    currentFoodWeight = 100; // Default
+    weightLabel.textContent = 'Weight (g):';
+    // Show Use Scale button only if scale is connected and has weight
+    if (window.isConnected && currentWeight > 0) {
+      useScaleWeightBtn.classList.remove('hidden');
+    } else {
+      useScaleWeightBtn.classList.add('hidden');
+    }
+  }
+
   weightInput.value = currentFoodWeight;
 
   // Calculate initial nutrition

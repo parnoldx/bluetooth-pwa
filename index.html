@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#4CAF50">
     <title>Calorie Tracker</title>
-    <link rel="manifest" href="manifest.json?v=3">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="manifest" href="manifest.json?v=4">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
     <div id="app">
@@ -69,9 +69,9 @@
                     <span class="btn-icon">📷</span>
                     Scan Barcode
                 </button>
-                <button id="voiceInputBtn" class="btn btn-voice">
-                    <span class="btn-icon">🎤</span>
-                    Voice / Search
+                <button id="searchFoodBtn" class="btn btn-secondary">
+                    <span class="btn-icon">🔍</span>
+                    Search Food
                 </button>
             </div>
         </section>
@@ -104,11 +104,9 @@
                     <button id="closeSearchBtn" class="btn-close">&times;</button>
                 </div>
                 <div class="search-controls">
-                    <div class="voice-input-row">
-                        <input type="text" id="searchInput" placeholder="Type food name..." autocomplete="off">
-                        <button id="startVoiceBtn" class="btn-icon" title="Voice input">🎤</button>
+                    <div class="search-input-row">
+                        <input type="text" id="searchInput" placeholder="Type food name..." autocomplete="off" inputmode="text">
                     </div>
-                    <div id="voiceStatus" class="voice-status hidden">Listening...</div>
                 </div>
                 <div id="quickFoods" class="quick-foods">
                     <h4>Recent Foods</h4>
@@ -134,10 +132,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="weight-input-row">
-                    <label>Weight (g):</label>
+                <div class="weight-input-row" id="weightInputRow">
+                    <label id="weightLabel">Weight (g):</label>
                     <input type="number" id="weightInput" min="1" max="50000" step="1" value="100">
-                    <button id="useScaleWeightBtn" class="btn btn-small">Use Scale</button>
+                    <button id="useScaleWeightBtn" class="btn btn-small hidden">Use Scale</button>
                 </div>
                 <div class="calculated-nutrition">
                     <div class="calc-item">
@@ -171,7 +169,7 @@
     </div>
 
     <!-- Modules -->
-    <script src="app.js?v=3"></script>
-    <script type="module" src="main.js?v=3"></script>
+    <script src="app.js?v=4"></script>
+    <script type="module" src="main.js?v=4"></script>
 </body>
 </html>
