@@ -25,8 +25,6 @@ const stabilityEl = document.getElementById('stability');
 const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
 const connectAnyBtn = document.getElementById('connectAnyBtn');
-const reconnectBtn = document.getElementById('reconnectBtn');
-const forgetBtn = document.getElementById('forgetBtn');
 const tareBtn = document.getElementById('tareBtn');
 const deviceInfoEl = document.getElementById('deviceInfo');
 
@@ -49,58 +47,17 @@ if (!navigator.bluetooth) {
 // Event listeners
 connectBtn.addEventListener('click', handleConnect);
 connectAnyBtn.addEventListener('click', handleConnectAny);
-reconnectBtn.addEventListener('click', handleReconnect);
-forgetBtn.addEventListener('click', handleForget);
-async function handleForget() {
-    localStorage.removeItem('scaleDeviceId');
-    localStorage.removeItem('scaleDeviceName');
-    reconnectBtn.classList.add('hidden');
-    forgetBtn.classList.add('hidden');
-    connectBtn.classList.remove('hidden');
-    connectAnyBtn.classList.remove('hidden');
-    deviceInfoEl.classList.add('hidden');
-    statusEl.textContent = 'Device forgotten - select to connect';
-}
+tareBtn.addEventListener('click', handleTare);
 
 // Check for saved device on load
 window.addEventListener('load', () => {
     const savedDeviceId = localStorage.getItem('scaleDeviceId');
     const savedDeviceName = localStorage.getItem('scaleDeviceName');
     if (savedDeviceId && navigator.bluetooth) {
-        // Show reconnect button with device name
-        connectBtn.classList.add('hidden');
-        reconnectBtn.textContent = `Reconnect to ${savedDeviceName || 'Scale'}`;
-        reconnectBtn.classList.remove('hidden');
-        forgetBtn.classList.remove('hidden');
+        // Update button text to show saved device
+        connectBtn.textContent = `Reconnect to ${savedDeviceName || 'Scale'}`;
     }
 });
-
-async function handleReconnect() {
-    try {
-        statusEl.textContent = 'Reconnecting to saved scale...';
-        reconnectBtn.disabled = true;
-
-        // Try to reconnect using the same method as first connection
-        // but with the saved device info to skip scanning
-        const savedName = localStorage.getItem('scaleDeviceName');
-
-        // Use name prefix filter based on saved device
-        const namePrefix = savedName && savedName.startsWith('QN') ? 'QN-' : '';
-
-        device = await navigator.bluetooth.requestDevice({
-            filters: namePrefix ? [{ namePrefix }] : undefined,
-            acceptAllDevices: !namePrefix,
-            optionalServices: [SERVICE_UUID]
-        });
-
-        await connectToDevice(device);
-
-    } catch (error) {
-        console.error('Reconnect error:', error);
-        statusEl.textContent = 'Reconnect failed: ' + error.message;
-        reconnectBtn.disabled = false;
-    }
-}
 
 async function tryAutoReconnect() {
     try {
@@ -348,30 +305,19 @@ function updateUIConnected() {
     reconnectAttempts = 0; // Reset reconnection counter on successful connection
     connectBtn.classList.add('hidden');
     connectAnyBtn.classList.add('hidden');
-    reconnectBtn.classList.add('hidden');
-    forgetBtn.classList.add('hidden');
     tareBtn.disabled = false;
 }
 
 function updateUIDisconnected() {
     const savedDeviceId = localStorage.getItem('scaleDeviceId');
+    const savedDeviceName = localStorage.getItem('scaleDeviceName');
 
-    if (savedDeviceId) {
-        // Show reconnect/forget buttons if we have a saved device
-        connectBtn.classList.add('hidden');
-        reconnectBtn.classList.remove('hidden');
-        reconnectBtn.disabled = false;
-        forgetBtn.classList.remove('hidden');
-    } else {
-        // Show connect buttons if no saved device
-        connectBtn.textContent = 'Connect (QN-KS)';
-        connectBtn.classList.remove('hidden');
-        connectBtn.classList.add('btn-primary');
-        connectBtn.classList.remove('btn-secondary');
-        connectBtn.disabled = false;
-        reconnectBtn.classList.add('hidden');
-        forgetBtn.classList.add('hidden');
-    }
+    // Show connect button with appropriate text
+    connectBtn.textContent = savedDeviceId ? `Reconnect to ${savedDeviceName || 'Scale'}` : 'Connect (QN-KS)';
+    connectBtn.classList.remove('hidden');
+    connectBtn.classList.add('btn-primary');
+    connectBtn.classList.remove('btn-secondary');
+    connectBtn.disabled = false;
 
     connectAnyBtn.textContent = 'Connect (Other)';
     connectAnyBtn.classList.remove('hidden');
