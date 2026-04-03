@@ -24,6 +24,7 @@ const weightEl = document.getElementById('weight');
 const stabilityEl = document.getElementById('stability');
 const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connectBtn');
+const connectAnyBtn = document.getElementById('connectAnyBtn');
 const tareBtn = document.getElementById('tareBtn');
 const deviceInfoEl = document.getElementById('deviceInfo');
 
@@ -45,6 +46,7 @@ if (!navigator.bluetooth) {
 
 // Event listeners
 connectBtn.addEventListener('click', handleConnect);
+connectAnyBtn.addEventListener('click', handleConnectAny);
 tareBtn.addEventListener('click', handleTare);
 
 // Auto-reconnect on load
@@ -80,8 +82,9 @@ async function handleConnect() {
             return;
         }
 
-        statusEl.textContent = 'Scanning...';
+        statusEl.textContent = 'Scanning for Arboleaf scale...';
         connectBtn.disabled = true;
+        connectAnyBtn.disabled = true;
 
         // Request device with service filter
         device = await navigator.bluetooth.requestDevice({
@@ -95,6 +98,34 @@ async function handleConnect() {
         console.error('Connection error:', error);
         statusEl.textContent = 'Connection failed: ' + error.message;
         connectBtn.disabled = false;
+        connectAnyBtn.disabled = false;
+    }
+}
+
+async function handleConnectAny() {
+    try {
+        if (isConnected) {
+            await disconnect();
+            return;
+        }
+
+        statusEl.textContent = 'Scanning all BLE devices...';
+        connectBtn.disabled = true;
+        connectAnyBtn.disabled = true;
+
+        // Request device WITHOUT service filter - shows all BLE devices
+        device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [SERVICE_UUID, 'battery_service', 'device_information']
+        });
+
+        await connectToDevice(device);
+
+    } catch (error) {
+        console.error('Connection error:', error);
+        statusEl.textContent = 'Connection failed: ' + error.message;
+        connectBtn.disabled = false;
+        connectAnyBtn.disabled = false;
     }
 }
 
@@ -272,6 +303,9 @@ function updateUIConnected() {
     connectBtn.textContent = 'Disconnect';
     connectBtn.classList.remove('btn-primary');
     connectBtn.classList.add('btn-secondary');
+    connectAnyBtn.textContent = 'Disconnect';
+    connectAnyBtn.classList.remove('btn-secondary');
+    connectAnyBtn.classList.add('btn-secondary');
     tareBtn.disabled = false;
 }
 
@@ -279,6 +313,11 @@ function updateUIDisconnected() {
     connectBtn.textContent = 'Connect to Scale';
     connectBtn.classList.add('btn-primary');
     connectBtn.classList.remove('btn-secondary');
+    connectBtn.disabled = false;
+    connectAnyBtn.textContent = 'Scan All BLE';
+    connectAnyBtn.classList.remove('btn-secondary');
+    connectAnyBtn.classList.add('btn-secondary');
+    connectAnyBtn.disabled = false;
     tareBtn.disabled = true;
     weightEl.textContent = '---';
     stabilityEl.className = 'stability';
