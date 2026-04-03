@@ -86,12 +86,10 @@ async function handleConnect() {
         connectBtn.disabled = true;
         connectAnyBtn.disabled = true;
 
-        // Request device with name filters (scale doesn't advertise service UUID in scan)
+        // Request device with name prefix filter (more permissive than exact match)
         device = await navigator.bluetooth.requestDevice({
             filters: [
-                { name: 'QN-KS' },
-                { namePrefix: 'QN-' },
-                { namePrefix: 'Arboleaf' }
+                { namePrefix: 'QN' }
             ],
             optionalServices: [SERVICE_UUID]
         });
