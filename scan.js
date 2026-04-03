@@ -10,12 +10,58 @@ let onScanErrorCallback = null;
 // DOM element IDs
 const READER_ELEMENT_ID = 'barcode-reader';
 
-// Initialize the scanner (lazy load html5-qrcode)
+// Load html5-qrcode from CDN with fallback
+let html5QrcodeLoaded = false;
+let Html5QrcodeConstructor = null;
+
+async function loadHtml5Qrcode() {
+  if (html5QrcodeLoaded) return Html5QrcodeConstructor;
+
+  // Try multiple CDN sources
+  const cdnUrls = [
+    'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
+    'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/dist/html5-qrcode.min.js'
+  ];
+
+  for (const url of cdnUrls) {
+    try {
+      await loadScript(url);
+      if (window.Html5Qrcode) {
+        Html5QrcodeConstructor = window.Html5Qrcode;
+        html5QrcodeLoaded = true;
+        console.log('html5-qrcode loaded from', url);
+        return Html5QrcodeConstructor;
+      }
+    } catch (e) {
+      console.warn('Failed to load from', url, e.message);
+    }
+  }
+
+  throw new Error('Failed to load html5-qrcode library');
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+// Initialize the scanner
 async function getScanner() {
   if (scanner) return scanner;
 
-  // Dynamically import html5-qrcode
-  const { Html5Qrcode } = await import('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/esm/index.js');
+  const Html5Qrcode = await loadHtml5Qrcode();
   scanner = new Html5Qrcode(READER_ELEMENT_ID);
   return scanner;
 }

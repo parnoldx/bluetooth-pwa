@@ -9,7 +9,36 @@ let onErrorCallback = null;
 
 // Check for Web Speech API support
 export function isVoiceSupported() {
-  return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  const supported = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  if (!supported) {
+    console.log('Web Speech API not supported in this browser');
+    return false;
+  }
+
+  // Also check if we're in a secure context (required for speech API)
+  if (!window.isSecureContext) {
+    console.log('Web Speech API requires HTTPS or localhost');
+    return false;
+  }
+
+  return true;
+}
+
+// Get detailed error message for users
+export function getVoiceErrorMessage(error) {
+  const errorMessages = {
+    'no-speech': 'No speech detected. Please try again.',
+    'aborted': 'Voice input was cancelled.',
+    'audio-capture': 'No microphone available. Check permissions.',
+    'network': 'Network error. Speech service unreachable.',
+    'not-allowed': 'Microphone permission denied.',
+    'service-not-allowed': 'Speech service not available. Try typing instead.',
+    'bad-grammar': 'Grammar error.',
+    'language-not-supported': 'Language not supported.',
+    'default': 'Voice input failed. Try typing instead.'
+  };
+
+  return errorMessages[error] || errorMessages['default'];
 }
 
 // Initialize speech recognition
@@ -106,20 +135,9 @@ function handleError(event) {
   console.error('Speech recognition error:', event.error);
 
   if (onErrorCallback) {
-    const errorMessages = {
-      'no-speech': 'No speech detected. Please try again.',
-      'aborted': 'Voice input was cancelled.',
-      'audio-capture': 'No microphone available.',
-      'network': 'Network error. Please check your connection.',
-      'not-allowed': 'Microphone permission denied.',
-      'service-not-allowed': 'Speech service not available.',
-      'bad-grammar': 'Grammar error.',
-      'language-not-supported': 'Language not supported.'
-    };
-
     onErrorCallback({
       error: event.error,
-      message: errorMessages[event.error] || `Error: ${event.error}`
+      message: getVoiceErrorMessage(event.error)
     });
   }
 }

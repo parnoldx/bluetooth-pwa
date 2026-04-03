@@ -11,7 +11,8 @@ import {
   searchFoods,
   parseWeightFromInput,
   isVoiceSupported,
-  normalizeFoodQuery
+  normalizeFoodQuery,
+  getVoiceErrorMessage
 } from './voice-input.js';
 import {
   initLog,
@@ -38,6 +39,7 @@ let currentWeight = 0;
 let isWeightStable = false;
 let selectedFood = null;
 let currentFoodWeight = 100; // Default weight for confirmation
+let isScaleMode = false; // True when adding from scale (skips confirmation)
 
 // DOM Elements - Scale
 const weightEl = document.getElementById('weight');
@@ -206,8 +208,9 @@ function setupEventListeners() {
   addToLogBtn.addEventListener('click', () => {
     if (currentWeight > 0) {
       currentFoodWeight = Math.round(currentWeight);
+      isScaleMode = true; // Mark as scale mode - skip confirmation
       openSearchModal();
-      showToast('Select a food for ' + formatWeight(currentFoodWeight), 'info');
+      showToast(`Select food for ${formatWeight(currentFoodWeight)}`, 'info');
     }
   });
 
@@ -347,7 +350,14 @@ async function onBarcodeScanned(barcode) {
     const food = await getFoodByBarcode(barcode);
     hideLoading();
     await closeScannerModal();
-    openConfirmModal(food);
+
+    // If in scale mode, add immediately without confirmation
+    if (isScaleMode && currentFoodWeight > 0) {
+      await addFoodDirectly(food, currentFoodWeight);
+    } else {
+      openConfirmModal(food);
+    }
+
     showToast(`Found: ${food.name}`, 'success');
   } catch (error) {
     hideLoading();
@@ -393,12 +403,19 @@ async function loadQuickFoods() {
     </span>
   `).join('');
 
-  // Add click handlers
+  // Add click handlers to quick food chips
   quickFoodsList.querySelectorAll('.quick-food-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const foodData = JSON.parse(chip.dataset.food);
-      closeSearchModal();
-      openConfirmModal(foodData);
+
+      // If in scale mode, add immediately without confirmation
+      if (isScaleMode && currentFoodWeight > 0) {
+        closeSearchModal();
+        addFoodDirectly(foodData, currentFoodWeight);
+      } else {
+        closeSearchModal();
+        openConfirmModal(foodData);
+      }
     });
   });
 }
@@ -438,8 +455,15 @@ function renderSearchResults(foods) {
   searchResults.querySelectorAll('.food-result').forEach(result => {
     result.addEventListener('click', () => {
       const foodData = JSON.parse(result.dataset.food);
-      closeSearchModal();
-      openConfirmModal(foodData);
+
+      // If in scale mode, add immediately without confirmation
+      if (isScaleMode && currentFoodWeight > 0) {
+        closeSearchModal();
+        addFoodDirectly(foodData, currentFoodWeight);
+      } else {
+        closeSearchModal();
+        openConfirmModal(foodData);
+      }
     });
   });
 }
@@ -447,7 +471,7 @@ function renderSearchResults(foods) {
 // Voice Input
 function onVoiceButtonClick() {
   if (!isVoiceSupported()) {
-    showToast('Voice input not supported on this device', 'error');
+    showToast(getVoiceErrorMessage('service-not-allowed'), 'error');
     searchInput.focus();
     return;
   }
@@ -519,6 +543,19 @@ function updateCalculatedNutrition() {
   calcFat.textContent = nutrition.fat;
 }
 
+async function addFoodDirectly(food, weight) {
+  try {
+    await addToLog(food, weight);
+    showToast(`Added: ${food.name} (${formatWeight(weight)})`, 'success');
+
+    // Reset scale mode after adding
+    isScaleMode = false;
+    currentFoodWeight = 100; // Reset to default
+  } catch (error) {
+    showToast('Failed to add: ' + error.message, 'error');
+  }
+}
+
 async function onSaveFood() {
   if (!selectedFood || currentFoodWeight <= 0) {
     showToast('Please enter a valid weight', 'error');
@@ -530,7 +567,8 @@ async function onSaveFood() {
     closeConfirmModal();
     showToast('Added to log!', 'success');
 
-    // Reset weight for next time
+    // Reset scale mode
+    isScaleMode = false;
     currentFoodWeight = 100;
   } catch (error) {
     showToast('Failed to add: ' + error.message, 'error');
@@ -563,6 +601,8 @@ function closeAllModals() {
   closeScannerModal();
   closeSearchModal();
   closeConfirmModal();
+  // Reset scale mode when closing modals
+  isScaleMode = false;
 }
 
 function escapeHtml(text) {
